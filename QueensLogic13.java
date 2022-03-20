@@ -1,5 +1,7 @@
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 import jdk.jshell.spi.ExecutionControl;
 import net.sf.javabdd.*;
@@ -8,6 +10,8 @@ public class QueensLogic13 implements IQueensLogic {
 
     private int size;		// Size of quadratic game board (i.e. size = #rows = #columns)
     private int[][] board;	// Content of the board. Possible values: 0 (empty), 1 (queen), -1 (no queen allowed)
+
+    private Set<Integer> queenPositions = new HashSet<>(); //the positions where a queen is placed
 
     int numberOfNodes = 2000000; //suggest by the project description
     int cache = 200000; //suggest by the project description
@@ -40,26 +44,33 @@ public class QueensLogic13 implements IQueensLogic {
         }
 
 
-            // TODO Auto-generated method stub
+            // TODO: NOT IMPLEMENTED: LOOK AT RESTRICTIONS??
         
     }
 
     //RULES: //https://homes.cs.aau.dk/~srba/courses/SV-08/material/09.pdf (exclusion of variables and one queen in each row)
+    //excludedRule: no other queen can be positioned on the same row, column or any of the diagonals
+    //oneQueenInEachRowRule: at least one queen in each row: conjunction of disjunctions
+    //NOTES:
+    //  The BDD must be true in the end if the queens are placed correctly
+    //  Placing a queen makes the variable true
+    //  excludedRule: conjucntion of negations, since placing a queen on one of the excluded positions will make the conjunction false, and hence we do not end up having a true BDD
+    //  oneQueenInEachRowRule: disjunction since at least one variable in the disjunction must be true to make the disjunction true, and that is placing a queen in at least one row, since there is a disjunction for each row.
     public void buildRules() {
         int nVars = size*size; // The number of variables to be used is the number of squares on the board
 		fact.setVarNum(nVars);
 
-        //rule: no other queen can be positioned on the same row, column or any of the diagnals (https://homes.cs.aau.dk/~srba/courses/SV-08/material/09.pdf)                                                                                        rules extended/applied with the rule that tells that a variable implies negation of all the variables excluded by the given variable.
+        //rule: no other queen can be positioned on the same row, column or any of the diagonals (https://homes.cs.aau.dk/~srba/courses/SV-08/material/09.pdf)
         for (int variable = 0; variable < nVars; variable++) {
             rules = rules.apply(excludedRule(variable), BDDFactory.and);
         }
 
-        //rule: must be a queen in each row (https://homes.cs.aau.dk/~srba/courses/SV-08/material/09.pdf)
-        rules = rules.apply(oneQueenPerRowRule(), BDDFactory.and);
+        //rule: must be at least one queen in each row (https://homes.cs.aau.dk/~srba/courses/SV-08/material/09.pdf)
+        rules = rules.apply(oneQueenInEachRowRule(), BDDFactory.and);
     }
 
     //https://homes.cs.aau.dk/~srba/courses/SV-08/material/09.pdf
-    public BDD oneQueenPerRowRule() { //disjunction
+    public BDD oneQueenInEachRowRule() { //disjunction: this means that there must be at least ONE queen in each row to make the BDD true
         BDD rule = True; //this is the overall rule for all the rows
         for (int row = 0; row < size; row++) { //run through the rows and make a rowRule for each
             BDD rowRule = False; //The disjunction identity is false: https://dogedaos.com/wiki/Disjunction.html
@@ -76,9 +87,9 @@ public class QueensLogic13 implements IQueensLogic {
     public BDD excludedRule(int variable) { //conjunction
         BDD rule = True; //The conjunctive identity is true //https://en.wikipedia.org/wiki/Logical_conjunction
         for (int excludedVariable : getExcludedVariablesBy(variable)) {
-            rule.apply(fact.nithVar(excludedVariable), BDDFactory.and); //negate all the excluded variables meaning that the excluded variabels must be false to make the conjunction true
+            rule.apply(fact.nithVar(excludedVariable), BDDFactory.and); //negate all the excluded variables meaning that the excluded variables must be false to make the conjunction true
         }
-        //if i is true (the queen is on the variable) the excluded variables must be negated
+        //if the variable is true (the queen is on the position/variable) the excluded variables must be negated
         return fact.ithVar(variable).imp(rule);
     }
 
@@ -167,5 +178,10 @@ public class QueensLogic13 implements IQueensLogic {
     public boolean isOnBoard(int col, int row) {
         return row >= 0 && row < size && col >= 0 && col < size;
     }
-    
+
+    //RESTRICTIONS
+    //returns BDD for a given variable. It is the restrictions for that given variable??
+    public BDD getRestrictions(int variable) {
+        return fact.ithVar(variable);
+    }
 }
