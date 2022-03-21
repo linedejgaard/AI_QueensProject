@@ -65,11 +65,11 @@ public class QueensLogic13 implements IQueensLogic {
 
         //rule: no other queen can be positioned on the same row, column or any of the diagonals (https://homes.cs.aau.dk/~srba/courses/SV-08/material/09.pdf)
         for (int variable = 0; variable < nVars; variable++) {
-            rules.andWith(excludedRule(variable));//rules = rules.and(excludedRule(variable)); //IS THE SAME rules.apply(excludedRule(variable), BDDFactory.and);
+            rules = rules.and(excludedRule(variable));//rules = rules.and(excludedRule(variable)); //IS THE SAME rules.apply(excludedRule(variable), BDDFactory.and);
         }
 
         //rule: must be at least one queen in each row (https://homes.cs.aau.dk/~srba/courses/SV-08/material/09.pdf)
-            rules.andWith(oneQueenInEachRowRule());//rules = rules.and(oneQueenInEachRowRule()); //IS THE SAME rules.apply(oneQueenInEachRowRule(), BDDFactory.and);
+            rules = rules.and(oneQueenInEachRowRule());//rules = rules.and(oneQueenInEachRowRule()); //IS THE SAME rules.apply(oneQueenInEachRowRule(), BDDFactory.and);
     }
 
     //https://homes.cs.aau.dk/~srba/courses/SV-08/material/09.pdf
@@ -79,9 +79,9 @@ public class QueensLogic13 implements IQueensLogic {
             BDD rowRule = False; //The disjunction identity is false: https://dogedaos.com/wiki/Disjunction.html
 
             for (int col = 0; col < size; col++) { //run through the cols and make the disjunction of the positions in the row: x1 OR x2 OR x3 etc.
-                rowRule.orWith(fact.ithVar(getVariable(col, row)));//IS THE SAME apply(fact.ithVar(getVariable(col, row)), BDDFactory.or);
+                rowRule = rowRule.or(fact.ithVar(getVariable(col, row)));//IS THE SAME apply(fact.ithVar(getVariable(col, row)), BDDFactory.or);
             }
-            rule.andWith(rowRule); //IS THE SAME apply(rowRule, BDDFactory.and); //conjoin the individual row rules such that row1Rule AND row2Rule AND row3Rule etc.
+            rule = rule.and(rowRule); //IS THE SAME apply(rowRule, BDDFactory.and); //conjoin the individual row rules such that row1Rule AND row2Rule AND row3Rule etc.
         }
         return rule;
     }
@@ -90,7 +90,7 @@ public class QueensLogic13 implements IQueensLogic {
     public BDD excludedRule(int variable) { //conjunction
         BDD rule = True; //The conjunctive identity is true //https://en.wikipedia.org/wiki/Logical_conjunction
         for (int excludedVariable : getExcludedVariablesBy(variable)) {
-            rule.andWith(fact.nithVar(excludedVariable)); //IS THE SAME apply(fact.nithVar(excludedVariable), BDDFactory.and); //negate all the excluded variables meaning that the excluded variables must be false to make the conjunction true
+            rule = rule.and(fact.nithVar(excludedVariable)); //IS THE SAME apply(fact.nithVar(excludedVariable), BDDFactory.and); //negate all the excluded variables meaning that the excluded variables must be false to make the conjunction true
         }
         //if the variable is true (the queen is on the position/variable) the excluded variables must be negated
         return fact.ithVar(variable).imp(rule);
@@ -108,10 +108,11 @@ public class QueensLogic13 implements IQueensLogic {
 
     private ArrayList<Integer> getVariablesInSameRow(int variable) {
         ArrayList<Integer> variablesInSameRow = new ArrayList<>();
+
+        int row = getRow(variable);
     
         for (int col=0; col<size; col++) {
-            
-            int row = getRowFromCol(variable, col);
+
             int variableInRow = getVariable(col, row);
 
             if (variableInRow != variable) {
@@ -145,15 +146,15 @@ public class QueensLogic13 implements IQueensLogic {
         int[][] directions = {leftUp, leftDown, rightDown, rightUp};
 
         for (int[] direction : directions) {
-            int col =  getCol(variable) + direction[0];
-            int row = getRow(variable) + direction[1];
+            int newCol =  getCol(variable) + direction[0];
+            int newRow = getRow(variable) + direction[1];
 
-            while (isOnBoard(col,row)) {
-                variablesInSameDia.add(row * size + col);
+            while (isOnBoard(newCol,newRow)) {
+                variablesInSameDia.add(getVariable(newCol,newRow));
 
                 //go further in the direction:
-                col += direction[0];
-                row += direction[1];
+                newCol += direction[0];
+                newRow += direction[1];
             }
         }
         return  variablesInSameDia;
@@ -184,11 +185,11 @@ public class QueensLogic13 implements IQueensLogic {
 
     //RESTRICTIONS
     //returns a BDD that is a conjunction of all the restrictions for the restrictions on the positions where a queen is placed.
-    private BDD getRestrictions() { //ASSIGNING VALUES TO VARIABLES: the ithVar must be true, the nithVar must be false in order to make the BDD true in the end
+    private BDD getRestrictions() { //ASSIGNING VALUES TO VARIABLES: the ithVar must be true, the nithVar must be false in order to make the BDD true in the end (Note to myself: a variable is an x, a node is the number)
         BDD restrictions = True; //the identity of conjunction is true
         for (int queenPosition : queenPositions) {
             //Since each variable has a BDD containing the rules for the variable (build when calling buildRules), all the variables/positions where a queen is placed contains the rules, and these rules are "added" together here
-            restrictions.andWith(fact.ithVar(queenPosition)); //IS THE SAME AS restrictions.apply(fact.ithVar(queenPosition), BDDFactory.and);
+            restrictions = restrictions.and(fact.ithVar(queenPosition)); //IS THE SAME AS restrictions.apply(fact.ithVar(queenPosition), BDDFactory.and);
         }
         return restrictions;
     }
