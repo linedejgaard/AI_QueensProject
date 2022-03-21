@@ -66,7 +66,7 @@ public class BDDExamples {
 		fact.printTable(restricted_x2);
 
 		BDD dj = fact.ithVar(0).and(fact.ithVar(1));
-		dj = dj.restrict(fact.nithVar(1));
+		dj = dj.restrict(fact.ithVar(1));
 
 		System.out.println("dj is unsat? : " + dj.isZero());
 		System.out.println("dj is taut? : " + dj.isOne());

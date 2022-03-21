@@ -1,17 +1,10 @@
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
-
-import javax.swing.plaf.synth.SynthSeparatorUI;
-
 import net.sf.javabdd.*;
 
 public class QueensLogic13 implements IQueensLogic {
 
     private int size;		// Size of quadratic game board (i.e. size = #rows = #columns)
     private int[][] board;	// Content of the board. Possible values: 0 (empty), 1 (queen), -1 (no queen allowed)
-
-    private Set<Integer> queenPositions = new HashSet<>(); //the positions where a queen is placed
 
     int numberOfNodes = 2000000; //suggest by the project description
     int cache = 200000; //suggest by the project description
@@ -43,30 +36,24 @@ public class QueensLogic13 implements IQueensLogic {
         if (board[column][row] == 0) { //if not a queen placed, place it
             board[column][row] = 1; //place the queen
             int variable = getVariable(column,row);
-            queenPositions.add(variable);
             updateRestrictions(variable);
             updateBoard();
         }
-
-
-            // TODO: NOT IMPLEMENTED: LOOK AT RESTRICTIONS??
-        
     }
 
     public void updateBoard() {
-        printBoard();
         for (int row = 0; row < size; row++) {
             for (int col = 0; col < size; col++) {
-                BDD temp = rules.restrict(fact.ithVar(getVariable(col, row)));
-                if (temp.isOne()) { //is tautology
+                BDD pos = rules.restrict(fact.ithVar(getVariable(col, row)));
+                BDD neg = rules.restrict(fact.nithVar(getVariable(col, row)));
+                if (neg.isZero()) { //not inserting a queen here is a contradiction
                     board[col][row] = 1;
-                } else if (temp.isZero()) { //is not satisfiable
+                    insertQueen(col, row);
+                } else if (pos.isZero()) { //inserting a queen here is a contradiction
                     board[col][row] = -1;
                 }
             }
         }
-        System.out.println();
-        printBoard();
     }
 
     public void printBoard() {
@@ -96,7 +83,7 @@ public class QueensLogic13 implements IQueensLogic {
         }
 
         //rule: must be at least one queen in each row (https://homes.cs.aau.dk/~srba/courses/SV-08/material/09.pdf)
-            rules = rules.and(oneQueenInEachRowRule());//rules = rules.and(oneQueenInEachRowRule()); //IS THE SAME rules.apply(oneQueenInEachRowRule(), BDDFactory.and);
+        rules = rules.and(oneQueenInEachRowRule());//rules = rules.and(oneQueenInEachRowRule()); //IS THE SAME rules.apply(oneQueenInEachRowRule(), BDDFactory.and);
     }
 
     //https://homes.cs.aau.dk/~srba/courses/SV-08/material/09.pdf
@@ -125,7 +112,6 @@ public class QueensLogic13 implements IQueensLogic {
 
     //help get methods: lists
     private ArrayList<Integer> getExcludedVariablesBy(int variable) {
-
         ArrayList<Integer> excludedVariables = getVariablesInSameCol(variable); //exclude variables in same col
         excludedVariables.addAll(getVariablesInSameRow(variable)); //exclude variables in same col
         excludedVariables.addAll(getVariablesDiagonal(variable)); //exclude variables in same dia
@@ -210,35 +196,9 @@ public class QueensLogic13 implements IQueensLogic {
         return row >= 0 && row < size && col >= 0 && col < size;
     }
 
-    //RESTRICTIONS
-    //returns a BDD that is a conjunction of all the restrictions for the restrictions on the positions where a queen is placed.
-    private BDD getRestrictions() { //ASSIGNING VALUES TO VARIABLES: the ithVar must be true, the nithVar must be false in order to make the BDD true in the end (Note to myself: a variable is an x, a node is the number)
-        BDD restrictions = True; //the identity of conjunction is true
-        for (int queenPosition : queenPositions) {
-            //Since each variable has a BDD containing the rules for the variable (build when calling buildRules), all the variables/positions where a queen is placed contains the rules, and these rules are "added" together here
-            restrictions = rules.and(fact.ithVar(queenPosition)); //Loop through the queens positions, and make the queenPosition variable true
-        }
-        return restrictions;
-    }
-
     //updates the restrictions, when a queen is added or removed
     //method is called every time a queen is added or removed
     private void updateRestrictions(int variable) {
         rules = rules.restrict(fact.ithVar(variable));
-        System.out.println("rules are unsatisfiable? " + rules.isZero());;
-        System.out.println("rules are tautology? " + rules.isOne());;
     }
-
-    /*private void addQueen(int col, int row) {
-        int variable = getVariable(col,row);
-        queenPositions.add(variable);
-        updateRestrictions(variable);
-    }*/
-
-    /*private void removeQueen(int col, int row) {
-        int variable = getVariable(col,row);
-        queenPositions.remove(variable);
-        updateRestrictions(variable);
-    }*/
-
 }
