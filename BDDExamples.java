@@ -34,19 +34,20 @@ public class BDDExamples {
 		BDD b1 = x2.apply(x0, BDDFactory.or); // Making the BDD corresponding to (x2 or x0)
 		// ... or - more conveniently - by using the methods, 'or', 'and', 'not', 'imp', 'biimp' etc.
 		BDD b2 = x2.or(x0); // Produces the same BDD as b1
-		
+		System.out.println("nx1: ");
+		fact.printTable(nx1);
 		// We can check that b1 and b2 are indeed the same using 'equals'
 		System.out.println("b1 equals b2: " + b1.equals(b2)); 
 		
 		// More complicated BDDs can of course also be produced
 		BDD b3 = nx1.or(x0).and(x2.or(False)); // The expression (not x1 or x0) and (x2 or False)
-		// Notice the relationship between the parenthesis and the structure of the calls 
+		// Notice the relationship between the parenthesis and the structure of the calls
 		
 		System.out.println("The node-entry for b3: ");
 		fact.printTable(b3);
 		
 		// Satisfiability checks and tautology-checks can be done by comparing to True or False, or using the following 
-		System.out.println("b3 is unsat? : " + b3.isZero()); 		
+		System.out.println("b3 is unsat? : " + b3.isZero()); 	//always false
 		System.out.println("b3 is tautology? : " + b3.isOne()); 
 		
 		// In order to restrict or quantify the expression to a given assignment,
@@ -59,7 +60,11 @@ public class BDDExamples {
 		System.out.println("The node-entry for restricted_b3: ");
 		fact.printTable(restricted_b3);
 		System.out.println("restricted_b3 is the same as b3?: " + restricted_b3.equals(b3) );
-		
+
+		System.out.println("RESTRICTION: ");
+		BDD restricted_x2 = x2;
+		fact.printTable(restricted_x2);
+
 		// Lastly notice, that there are version of many of the above mentioned methods (e.g. 'or')
 		// that ends with "With". The latter methods transforms/consumes the calling BDD 
 		// instead of returning a new BDD

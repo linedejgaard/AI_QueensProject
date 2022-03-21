@@ -1,9 +1,7 @@
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
-import jdk.jshell.spi.ExecutionControl;
 import net.sf.javabdd.*;
 
 public class QueensLogic13 implements IQueensLogic {
@@ -21,7 +19,7 @@ public class QueensLogic13 implements IQueensLogic {
     BDD False = fact.zero();
 
     BDD rules = True; //this is going to be a conjunction, and since the identity of conjunction is true, this is set to true
-    BDD restrictions = True;
+    BDD restrictedBDD = True;
     
     @Override
     public void initializeBoard(int size) {
@@ -38,17 +36,42 @@ public class QueensLogic13 implements IQueensLogic {
     @Override
     public void insertQueen(int column, int row) {
         //-1: red cross
-        if (board[column][row] == 1) { //if queen is placed, remove it
-            board[column][row] = 0;
-            removeQueen(column, row);
-        } else { //if not a queen placed, place it
-            board[column][row] = 1;
-            addQueen(column, row);
+        //1: if queen is placed
+        if (board[column][row] == 0) { //if not a queen placed, place it
+            board[column][row] = 1; //place the queen
+            int variable = getVariable(column,row);
+            queenPositions.add(variable);
+            updateRestrictions(variable);
+            updateBoard();
         }
 
 
             // TODO: NOT IMPLEMENTED: LOOK AT RESTRICTIONS??
         
+    }
+
+    public void updateBoard() {
+        printBoard();
+        for (int row = 0; row < size; row++) {
+            for (int col = 0; col < size; col++) {
+                if (restrictedBDD.isOne()) { //is tautology
+                    board[col][row] = 1;
+                } else if (restrictedBDD.isZero()) { //is not satisfiable
+                    board[col][row] = -1;
+                }
+            }
+        }
+        System.out.println();
+        printBoard();
+    }
+
+    public void printBoard() {
+        for (int row = 0; row < size; row++) {
+            for (int col = 0; col < size; col++) {
+                System.out.print(board[col][row] + " ");
+            }
+            System.out.println();
+        }
     }
 
     //RULES: //https://homes.cs.aau.dk/~srba/courses/SV-08/material/09.pdf (exclusion of variables and one queen in each row)
@@ -189,25 +212,28 @@ public class QueensLogic13 implements IQueensLogic {
         BDD restrictions = True; //the identity of conjunction is true
         for (int queenPosition : queenPositions) {
             //Since each variable has a BDD containing the rules for the variable (build when calling buildRules), all the variables/positions where a queen is placed contains the rules, and these rules are "added" together here
-            restrictions = restrictions.and(fact.ithVar(queenPosition)); //IS THE SAME AS restrictions.apply(fact.ithVar(queenPosition), BDDFactory.and);
+            restrictions = rules.and(fact.ithVar(queenPosition)); //Loop through the queens positions, and make the queenPosition variable true
         }
         return restrictions;
     }
 
     //updates the restrictions, when a queen is added or removed
     //method is called every time a queen is added or removed
-    private void updateRestrictions() {
-        restrictions = rules.restrict(getRestrictions());
+    private void updateRestrictions(int variable) {
+        //rules = rules.restrict(fact.ithVar(variable));
+        restrictedBDD = getRestrictions();
     }
 
-    private void addQueen(int col, int row) {
-        queenPositions.add(getVariable(col,row));
-        updateRestrictions();
-    }
+    /*private void addQueen(int col, int row) {
+        int variable = getVariable(col,row);
+        queenPositions.add(variable);
+        updateRestrictions(variable);
+    }*/
 
-    private void removeQueen(int col, int row) {
-        queenPositions.remove(getVariable(col,row));
-        updateRestrictions();
-    }
+    /*private void removeQueen(int col, int row) {
+        int variable = getVariable(col,row);
+        queenPositions.remove(variable);
+        updateRestrictions(variable);
+    }*/
 
 }
