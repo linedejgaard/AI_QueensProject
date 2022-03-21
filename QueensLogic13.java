@@ -2,6 +2,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.swing.plaf.synth.SynthSeparatorUI;
+
 import net.sf.javabdd.*;
 
 public class QueensLogic13 implements IQueensLogic {
@@ -26,6 +28,7 @@ public class QueensLogic13 implements IQueensLogic {
         this.size = size;
         this.board = new int[size][size];
         buildRules();
+        updateBoard();
     }
 
     @Override
@@ -54,9 +57,10 @@ public class QueensLogic13 implements IQueensLogic {
         printBoard();
         for (int row = 0; row < size; row++) {
             for (int col = 0; col < size; col++) {
-                if (restrictedBDD.isOne()) { //is tautology
+                BDD temp = rules.restrict(fact.ithVar(getVariable(col, row)));
+                if (temp.isOne()) { //is tautology
                     board[col][row] = 1;
-                } else if (restrictedBDD.isZero()) { //is not satisfiable
+                } else if (temp.isZero()) { //is not satisfiable
                     board[col][row] = -1;
                 }
             }
@@ -220,8 +224,9 @@ public class QueensLogic13 implements IQueensLogic {
     //updates the restrictions, when a queen is added or removed
     //method is called every time a queen is added or removed
     private void updateRestrictions(int variable) {
-        //rules = rules.restrict(fact.ithVar(variable));
-        restrictedBDD = getRestrictions();
+        rules = rules.restrict(fact.ithVar(variable));
+        System.out.println("rules are unsatisfiable? " + rules.isZero());;
+        System.out.println("rules are tautology? " + rules.isOne());;
     }
 
     /*private void addQueen(int col, int row) {

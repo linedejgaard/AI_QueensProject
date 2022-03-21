@@ -11,7 +11,7 @@ public class BDDExamples {
 		BDDFactory fact = JFactory.init(20,20); // The two numbers represents the node number and the cache size.
 												// Not so important - see project description for a useful size.
 		int nVars = 3; // The number of variables to be used.
-		fact.setVarNum(nVars); 
+		fact.setVarNum(nVars);
 		
 		// We can print out the node table (T in your nodes) using the factory
 		System.out.println("The node table: "); // A row contains nodeID, variable number, low_nodeID, high_nodeID
@@ -37,7 +37,7 @@ public class BDDExamples {
 		System.out.println("nx1: ");
 		fact.printTable(nx1);
 		// We can check that b1 and b2 are indeed the same using 'equals'
-		System.out.println("b1 equals b2: " + b1.equals(b2)); 
+		System.out.println("b1 equals b2: " + b1.equals(b2));
 		
 		// More complicated BDDs can of course also be produced
 		BDD b3 = nx1.or(x0).and(x2.or(False)); // The expression (not x1 or x0) and (x2 or False)
@@ -64,6 +64,12 @@ public class BDDExamples {
 		System.out.println("RESTRICTION: ");
 		BDD restricted_x2 = x2;
 		fact.printTable(restricted_x2);
+
+		BDD dj = fact.ithVar(0).and(fact.ithVar(1));
+		dj = dj.restrict(fact.nithVar(1));
+
+		System.out.println("dj is unsat? : " + dj.isZero());
+		System.out.println("dj is taut? : " + dj.isOne());
 
 		// Lastly notice, that there are version of many of the above mentioned methods (e.g. 'or')
 		// that ends with "With". The latter methods transforms/consumes the calling BDD 
