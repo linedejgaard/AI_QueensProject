@@ -16,8 +16,7 @@ public class QueensLogic13 implements IQueensLogic {
 
     BDD rules = True; // this is going to be a conjunction, and since the identity of conjunction is
                       // true, this is set to true
-    BDD restrictedBDD = True;
-
+                      
     @Override
     public void initializeBoard(int size) {
         this.size = size;
